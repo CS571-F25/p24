@@ -1,0 +1,108 @@
+.feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: rgba(15, 23, 42, 0.8);
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.45);
+  color: #e2e8f0;
+}
+
+.feedback-form header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.feedback-form header p {
+  margin: 0.35rem 0 0;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.feedback-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.feedback-form__field span {
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.feedback-form__field input,
+.feedback-form__field select,
+.feedback-form__field textarea {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 12px;
+  padding: 0.75rem;
+  color: inherit;
+  font-size: 0.95rem;
+  transition: border 0.15s ease, box-shadow 0.15s ease;
+}
+
+.feedback-form__field textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.feedback-form__field input:focus,
+.feedback-form__field select:focus,
+.feedback-form__field textarea:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.65);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.feedback-form button {
+  align-self: flex-start;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem 1.6rem;
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(99, 102, 241, 0.35);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.feedback-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.feedback-form button:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+.feedback-form__status {
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+.feedback-form__status--success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #bbf7d0;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.feedback-form__status--error {
+  background: rgba(248, 113, 113, 0.15);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+}
+
+.feedback-form__status--neutral {
+  background: rgba(148, 163, 184, 0.2);
+  color: #e2e8f0;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}

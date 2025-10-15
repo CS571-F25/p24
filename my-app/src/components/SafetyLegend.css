@@ -1,0 +1,55 @@
+.safety-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: #cbd5f5;
+  font-size: 0.85rem;
+}
+
+.safety-legend__title {
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+.safety-legend__items {
+  display: flex;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.safety-legend__items > div {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.safety-legend__swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.safety-legend__swatch--safest {
+  background: #22c55e;
+}
+
+.safety-legend__swatch--balanced {
+  background: #f97316;
+}
+
+.safety-legend__swatch--fastest {
+  background: #3b82f6;
+}
+
+.safety-legend p {
+  margin: 0;
+  opacity: 0.75;
+  line-height: 1.4;
+}

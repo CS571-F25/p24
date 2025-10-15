@@ -1,0 +1,31 @@
+.preference-toggle {
+  display: inline-flex;
+  background: rgba(15, 23, 42, 0.85);
+  border-radius: 12px;
+  padding: 0.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  gap: 0.25rem;
+}
+
+.preference-toggle__button {
+  font-size: 0.9rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, color 0.2s ease;
+}
+
+.preference-toggle__button--active {
+  background: linear-gradient(135deg, #facc15 0%, #fb923c 100%);
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow: 0 10px 20px rgba(250, 204, 21, 0.25);
+}
+
+.preference-toggle__button:not(.preference-toggle__button--active):hover {
+  background: rgba(59, 130, 246, 0.2);
+  transform: translateY(-1px);
+}
