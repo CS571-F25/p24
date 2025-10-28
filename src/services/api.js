@@ -1,8 +1,12 @@
 import { mockRoutes } from '../data/mockRoutes'
 
-const BASE_URL = process.env.REACT_APP_BACKEND_BASE_URL
-  ? process.env.REACT_APP_BACKEND_BASE_URL.replace(/\/$/, '')
-  : ''
+const rawBaseUrl =
+  import.meta.env.VITE_BACKEND_BASE_URL ??
+  import.meta.env.REACT_APP_BACKEND_BASE_URL ??
+  process.env.REACT_APP_BACKEND_BASE_URL ??
+  ''
+
+const BASE_URL = rawBaseUrl.replace(/\/$/, '')
 
 const headers = {
   'Content-Type': 'application/json',
@@ -14,7 +18,7 @@ export async function fetchRoutes(criteria) {
       routes: mockRoutes,
       usedMock: true,
       message:
-        'Backend base URL is not set. Update REACT_APP_BACKEND_BASE_URL to fetch live routes.',
+        'Backend base URL is not set. Update VITE_BACKEND_BASE_URL to fetch live routes.',
     }
   }
 
@@ -56,7 +60,7 @@ export async function submitFeedback(feedback) {
       success: true,
       type: 'info',
       message:
-        'Feedback captured locally. Configure REACT_APP_BACKEND_BASE_URL to post to your API.',
+        'Feedback captured locally. Configure VITE_BACKEND_BASE_URL to post to your API.',
     }
   }
 

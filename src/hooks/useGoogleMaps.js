@@ -7,12 +7,20 @@ export function useGoogleMaps() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY
+    const rawKey =
+      import.meta.env.VITE_GOOGLE_MAPS_API_KEY?.trim() ??
+      import.meta.env.REACT_APP_GOOGLE_MAPS_API_KEY?.trim() ??
+      process.env.REACT_APP_GOOGLE_MAPS_API_KEY?.trim()
+
+    const apiKey =
+      rawKey && rawKey.startsWith('"') && rawKey.endsWith('"')
+        ? rawKey.slice(1, -1).trim()
+        : rawKey
 
     if (!apiKey) {
       setError(
         new Error(
-          'Missing Google Maps API key. Set REACT_APP_GOOGLE_MAPS_API_KEY in .env',
+          'Missing Google Maps API key. Set VITE_GOOGLE_MAPS_API_KEY in .env',
         ),
       )
       return
@@ -49,7 +57,9 @@ export function useGoogleMaps() {
 
     const script = document.createElement('script')
     script.id = SCRIPT_ID
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=geometry`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
+      apiKey,
+    )}&libraries=geometry`
     script.async = true
     script.defer = true
     script.addEventListener('load', handleLoad)

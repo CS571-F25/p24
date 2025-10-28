@@ -81,7 +81,6 @@ function MapView({ activeRouteId, onSelectRoute, routes }) {
     const currentPolylines = polylinesRef.current
     return () => {
       currentPolylines.forEach((polyline) => polyline.setMap(null))
-      console.log(process.env.REACT_APP_GOOGLE_MAPS_API_KEY)
     }
   }, [])
 
@@ -94,7 +93,7 @@ function MapView({ activeRouteId, onSelectRoute, routes }) {
           </Card.Title>
           <Card.Text className={styles.description}>
             {error.message}. Add a valid{' '}
-            <code>REACT_APP_GOOGLE_MAPS_API_KEY</code> to <code>.env</code> to
+            <code>VITE_GOOGLE_MAPS_API_KEY</code> to <code>.env</code> to
             unlock the interactive preview.
           </Card.Text>
         </Card.Body>

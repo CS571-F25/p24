@@ -6,7 +6,7 @@ SafeCommute helps walkers and cyclists pick safer routes by blending travel time
 
 - **React 19 + ReactDOM 19** rendered with Vite and React Bootstrap for a clean, accessible UI.
 - **GitHub Pages workflow** (`.github/workflows/deploy.yml`) builds from `main` and publishes the production bundle from `dist/`.
-- **Environment-driven configuration** via `.env` and `.env.local`, following the familiar `REACT_APP_*` convention for API keys and service URLs.
+- **Environment-driven configuration** via `.env` and `.env.local`, using `VITE_*` (or `REACT_APP_*` for legacy keys) to surface secrets to the browser.
 
 ## Quick start
 
@@ -15,20 +15,20 @@ SafeCommute helps walkers and cyclists pick safer routes by blending travel time
 3. Run the dev server with `npm run dev`. Your app is available at the Vite preview URL (typically `http://localhost:5173`).
 4. Build for production with `npm run build`, or preview the static build locally with `npm run preview`.
 
-> The Google Maps SDK loads on demand. Without a valid `REACT_APP_GOOGLE_MAPS_API_KEY`, the map pane gracefully falls back to a helper message.
+> The Google Maps SDK loads on demand. Without a valid `VITE_GOOGLE_MAPS_API_KEY`, the map pane gracefully falls back to a helper message.
 
 ## Environment variables
 
-SafeCommute reads the following keys from `.env`/`.env.local`:
+SafeCommute reads the following keys from `.env`/`.env.local` (prefix with `VITE_` so Vite exposes them to the client):
 
-- `REACT_APP_GOOGLE_MAPS_API_KEY` – required for the live map preview.
-- `REACT_APP_BACKEND_BASE_URL` – base URL for the `/routes` and `/feedback` endpoints.
-- `REACT_APP_CRIME_DATA_API_URL` and `REACT_APP_CRIME_DATA_API_TOKEN` – optional future integrations for municipal crime feeds.
-- `REACT_APP_WEATHER_API_KEY` – reserved for weather-aware routing.
+- `VITE_GOOGLE_MAPS_API_KEY` – required for the live map preview.
+- `VITE_BACKEND_BASE_URL` – base URL for the `/routes` and `/feedback` endpoints.
+- `VITE_CRIME_DATA_API_URL` and `VITE_CRIME_DATA_API_TOKEN` – optional future integrations for municipal crime feeds.
+- `VITE_WEATHER_API_KEY` – reserved for weather-aware routing.
 - `MONGODB_URI`, `MONGODB_DB_NAME`, `MONGODB_ROUTES_COLLECTION`, `MONGODB_FEEDBACK_COLLECTION` – reference values for an Express + MongoDB backend.
 - `JWT_SECRET` – seed value for planned auth/session features.
 
-All `REACT_APP_*` variables are exposed to the browser so you can read them from `process.env`.
+All `VITE_*` variables (and any `REACT_APP_*` values you keep around) are exposed to the browser via `import.meta.env`.
 
 ## Frontend flow
 
@@ -55,7 +55,7 @@ Automated tests are not wired up yet. Add Jest or Vitest coverage for route filt
 
 ## Next steps
 
-1. Stand up real `/routes` and `/feedback` endpoints, then update `REACT_APP_BACKEND_BASE_URL` to remove the mock data dependency.
+1. Stand up real `/routes` and `/feedback` endpoints, then update `VITE_BACKEND_BASE_URL` to remove the mock data dependency.
 2. Replace the placeholder test with meaningful unit coverage.
 3. Integrate live data feeds (crime, weather, protected lanes) and expand the map markers accordingly.
 4. Harden authentication by plumbing the provided JWT scaffold through your backend of choice.
