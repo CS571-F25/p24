@@ -1,0 +1,131 @@
+.card {
+  border: none;
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  background: #ffffff;
+  box-shadow: 0 18px 45px rgba(17, 37, 82, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 60px rgba(17, 37, 82, 0.12);
+}
+
+.activeCard {
+  border: 1.5px solid rgba(13, 110, 253, 0.6);
+  box-shadow: 0 24px 60px rgba(13, 110, 253, 0.18);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #0b2253;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  color: #50658b;
+  font-size: 0.95rem;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.metaDivider {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(80, 101, 139, 0.4);
+}
+
+.badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-end;
+}
+
+.metricsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  background: rgba(13, 110, 253, 0.06);
+  border-radius: 12px;
+}
+
+.metricLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: #466089;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metricValue {
+  display: block;
+  font-weight: 600;
+  color: #0d6efd;
+  font-size: 1.1rem;
+}
+
+.incidentHeader {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #112552;
+  margin-bottom: 0.6rem;
+}
+
+.incidentList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.incidentItem {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  font-size: 0.95rem;
+  color: #344666;
+  line-height: 1.4;
+}
+
+.incidentBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(13, 110, 253, 0.12);
+  color: #0d6efd;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.selectButton {
+  border-radius: 12px;
+  font-weight: 600;
+  padding-block: 0.75rem;
+  width: 100%;
+}
