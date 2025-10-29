@@ -10,7 +10,7 @@ SafeCommute helps walkers and cyclists pick safer routes by blending travel time
 
 ## Quick start
 
-1. Duplicate `.env` (or `.env.example` if you received a blank template) to `.env.local` and plug in your own keys. The Google Maps key is required to render the interactive map, while other fields help you wire in live APIs later.
+1. Duplicate `.env` (or `.env.example` if you received a blank template) to `.env.local` and plug in your own keys. The Google Maps key is required to render the interactive map, while other fields help you wire in live APIs later. Add `VITE_PUBLIC_BASE=/p24/` (or your repository slug) if you plan to build locally and push the `dist/` folder to GitHub Pages.
 2. Install dependencies with `npm install`.
 3. Run the dev server with `npm run dev`. Your app is available at the Vite preview URL (typically `http://localhost:5173`).
 4. Build for production with `npm run build`, or preview the static build locally with `npm run preview`.
@@ -25,6 +25,7 @@ SafeCommute reads the following keys from `.env`/`.env.local` (prefix with `VITE
 - `VITE_BACKEND_BASE_URL` – base URL for the `/routes` and `/feedback` endpoints.
 - `VITE_CRIME_DATA_API_URL` and `VITE_CRIME_DATA_API_TOKEN` – optional future integrations for municipal crime feeds.
 - `VITE_WEATHER_API_KEY` – reserved for weather-aware routing.
+- `VITE_PUBLIC_BASE` – optional override for the built asset base path. Set this to `/p24/` (or equivalent) when deploying manually to GitHub Pages from a nested route.
 - `MONGODB_URI`, `MONGODB_DB_NAME`, `MONGODB_ROUTES_COLLECTION`, `MONGODB_FEEDBACK_COLLECTION` – reference values for an Express + MongoDB backend.
 - `JWT_SECRET` – seed value for planned auth/session features.
 

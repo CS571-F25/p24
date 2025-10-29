@@ -4,8 +4,22 @@ import react from '@vitejs/plugin-react'
 // Configure a dynamic base so production assets resolve correctly on GitHub Pages
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), ['VITE_', 'REACT_APP_'])
-  const repoName = process.env.GITHUB_REPOSITORY?.split('/')?.pop() ?? ''
-  const base = process.env.GITHUB_ACTIONS ? `/${repoName}/` : '/'
+  const repoName = env.VITE_GH_PAGES_REPO?.trim()
+    ? env.VITE_GH_PAGES_REPO.trim()
+    : process.env.GITHUB_REPOSITORY?.split('/')?.pop() ?? ''
+
+  const explicitBase = env.VITE_PUBLIC_BASE?.trim()
+  const normalizedExplicitBase =
+    explicitBase && !explicitBase.endsWith('/')
+      ? `${explicitBase}/`
+      : explicitBase
+
+  const isProd = mode === 'production'
+
+  const base = isProd
+    ? normalizedExplicitBase ??
+      (repoName ? `/${repoName}/` : './')
+    : '/'
 
   const reactAppEnvEntries = Object.entries(env)
     .filter(([key]) => key.startsWith('REACT_APP_'))
