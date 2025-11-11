@@ -18,6 +18,32 @@
   color: #53658a;
 }
 
+.routeBadge {
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(13, 110, 253, 0.08);
+  border: 1px dashed rgba(13, 110, 253, 0.3);
+}
+
+.routeBadge[data-has-route='false'] {
+  background: rgba(255, 193, 7, 0.12);
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+.routeBadgeLabel {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #304775;
+  letter-spacing: 0.04em;
+}
+
+.routeBadgeValue {
+  font-size: 0.95rem;
+  color: #0a1f44;
+}
+
 .label {
   font-weight: 600;
   color: #1f2f4d;

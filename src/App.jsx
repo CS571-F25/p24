@@ -54,6 +54,7 @@ function App() {
   })
   const [isPlanning, setIsPlanning] = useState(false)
   const [feedbackStatus, setFeedbackStatus] = useState(null)
+  const [lastTripRequest, setLastTripRequest] = useState(null)
 
   const sortedRoutes = useMemo(
     () => sortRoutesByPreference(routes, preference),
@@ -66,8 +67,14 @@ function App() {
     }
   }, [sortedRoutes, selectedRouteId])
 
+  const activeRoute = useMemo(
+    () => sortedRoutes.find((route) => route.id === selectedRouteId) ?? null,
+    [sortedRoutes, selectedRouteId],
+  )
+
   const handlePlanRoute = async (tripRequest) => {
     setIsPlanning(true)
+    setLastTripRequest(tripRequest)
     try {
       const result = await fetchRoutes(tripRequest)
       setRoutes(result.routes)
@@ -102,7 +109,16 @@ function App() {
   }
 
   const handleFeedbackSubmit = async (feedbackPayload) => {
-    const result = await submitFeedback(feedbackPayload)
+    const payloadWithContext = {
+      ...feedbackPayload,
+      routeId: activeRoute?.id ?? null,
+      routeName: activeRoute?.name ?? null,
+      preference,
+      tripOrigin: lastTripRequest?.origin ?? null,
+      tripDestination: lastTripRequest?.destination ?? null,
+    }
+
+    const result = await submitFeedback(payloadWithContext)
     setFeedbackStatus(result)
     return result
   }
@@ -194,6 +210,7 @@ function App() {
             </Col>
             <Col lg={4}>
               <FeedbackForm
+                activeRoute={activeRoute}
                 categories={feedbackCategories}
                 onSubmit={handleFeedbackSubmit}
                 status={feedbackStatus}

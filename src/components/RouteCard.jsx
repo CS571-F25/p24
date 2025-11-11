@@ -11,6 +11,7 @@ function RouteCard({ isActive, onSelect, route }) {
     incidents = [],
     metrics = {},
     mode,
+    communityStats,
   } = route
 
   const durationText =
@@ -66,16 +67,35 @@ function RouteCard({ isActive, onSelect, route }) {
           </div>
         </div>
 
+        {communityStats?.totalReports ? (
+          <div className={styles.communityBar}>
+            <span className={styles.metricLabel}>Community intel</span>
+            <span className={styles.communityValue}>
+              {communityStats.totalReports} reports in the last 30 days ·{' '}
+              {communityStats.positive} positive / {communityStats.negative}{' '}
+              caution
+            </span>
+          </div>
+        ) : null}
+
         <div>
           <h3 className={styles.incidentHeader}>Recent highlights</h3>
-          <ul className={styles.incidentList}>
-            {incidents.map((incident) => (
-              <li key={incident.id} className={styles.incidentItem}>
-                <span className={styles.incidentBadge}>{incident.type}</span>
-                <span>{incident.description}</span>
-              </li>
-            ))}
-          </ul>
+          {incidents.length > 0 ? (
+            <ul className={styles.incidentList}>
+              {incidents.map((incident) => (
+                <li key={incident.id} className={styles.incidentItem}>
+                  <span className={styles.incidentBadge}>
+                    {incident.type}
+                  </span>
+                  <span>{incident.description}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className={styles.incidentEmpty}>
+              No updates yet. Submit feedback to help others stay safe.
+            </p>
+          )}
         </div>
 
         <Button

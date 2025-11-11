@@ -85,6 +85,24 @@
   font-size: 1.1rem;
 }
 
+.communityBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(16, 35, 71, 0.05);
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.communityValue {
+  font-weight: 600;
+  color: #0a1f44;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
 .incidentHeader {
   font-size: 0.95rem;
   font-weight: 600;
@@ -121,6 +139,12 @@
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
+}
+
+.incidentEmpty {
+  font-size: 0.9rem;
+  color: #5c6f92;
+  margin-bottom: 1.2rem;
 }
 
 .selectButton {

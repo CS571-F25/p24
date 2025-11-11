@@ -7,9 +7,10 @@ const INITIAL_FORM = {
   email: '',
   category: '',
   notes: '',
+  locationHint: '',
 }
 
-function FeedbackForm({ categories, onSubmit, status }) {
+function FeedbackForm({ activeRoute, categories, onSubmit, status }) {
   const [formState, setFormState] = useState(() => ({
     ...INITIAL_FORM,
     category: categories[0]?.value ?? '',
@@ -58,6 +59,13 @@ function FeedbackForm({ categories, onSubmit, status }) {
           there.
         </Card.Subtitle>
 
+        <div className={styles.routeBadge} data-has-route={!!activeRoute}>
+          <span className={styles.routeBadgeLabel}>This note tags:</span>
+          <strong className={styles.routeBadgeValue}>
+            {activeRoute?.name ?? 'Select a route to attach your feedback'}
+          </strong>
+        </div>
+
         {banner?.message ? (
           <Alert
             variant={banner.type ?? (banner.success ? 'success' : 'danger')}
@@ -104,6 +112,19 @@ function FeedbackForm({ categories, onSubmit, status }) {
             </Form.Select>
           </Form.Group>
 
+          <Form.Group className="mb-3" controlId="feedback-location">
+            <Form.Label className={styles.label}>Where is this?</Form.Label>
+            <Form.Control
+              name="locationHint"
+              placeholder="Cross streets or landmarks (optional)"
+              value={formState.locationHint}
+              onChange={handleChange}
+            />
+            <Form.Text muted>
+              Include a nearby landmark so future travelers can benefit.
+            </Form.Text>
+          </Form.Group>
+
           <Form.Group className="mb-3" controlId="feedback-notes">
             <Form.Label className={styles.label}>Notes</Form.Label>
             <Form.Control
@@ -117,12 +138,12 @@ function FeedbackForm({ categories, onSubmit, status }) {
             />
           </Form.Group>
 
-          <Button
-            type="submit"
-            variant="primary"
-            className={styles.submitButton}
-            disabled={isSubmitting || !formState.notes.trim()}
-          >
+        <Button
+          type="submit"
+          variant="primary"
+          className={styles.submitButton}
+          disabled={isSubmitting || !formState.notes.trim()}
+        >
             {isSubmitting ? 'Sending…' : 'Submit feedback'}
           </Button>
         </Form>

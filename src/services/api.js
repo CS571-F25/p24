@@ -72,7 +72,16 @@ export async function submitFeedback(feedback) {
     })
 
     if (!response.ok) {
-      throw new Error(`Request failed with status ${response.status}`)
+      const errorPayload = await response.json().catch(() => ({}))
+      throw new Error(
+        errorPayload?.message ??
+          `Request failed with status ${response.status}`,
+      )
+    }
+
+    const payload = await response.json().catch(() => null)
+    if (payload && typeof payload === 'object') {
+      return payload
     }
 
     return {
