@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 env:
   REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
-  REACT_APP_BACKEND_BASE_URL: https://your-api.example.com  # if needed
+  REACT_APP_BACKEND_BASE_URL: https://571ui.netlify.app/
 
 
 on:
