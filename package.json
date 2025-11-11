@@ -10,7 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@googlemaps/google-maps-services-js": "^3.4.2",
     "bootstrap": "^5.3.8",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "node-fetch": "^3.3.2",
+    "polyline": "^0.2.0",
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.1.1",
@@ -29,5 +35,18 @@
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.1.14"
-  }
+  },
+  "description": "SafeCommute helps walkers and cyclists pick safer routes by blending travel time with lighting, patrol, and incident data. The current build ships with rich demo data so you can evaluate the experience before a backend is connected.",
+  "main": "eslint.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CS571-F25/p24.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CS571-F25/p24/issues"
+  },
+  "homepage": "https://github.com/CS571-F25/p24#readme"
 }
