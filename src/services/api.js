@@ -24,7 +24,6 @@ export async function fetchRoutes(criteria) {
 
   try {
     // eslint-disable-next-line no-console
-    console.log('SafeCommute fetchRoutes payload', criteria)
     const response = await fetch(`${BASE_URL}/routes`, {
       method: 'POST',
       headers,

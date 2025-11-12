@@ -29,15 +29,11 @@ function RoutePlannerForm({ isLoading, onPlanRoute }) {
       return
     }
 
-    const payload = {
+    onPlanRoute?.({
       origin: origin.trim(),
       destination: destination.trim(),
       mode,
-    }
-
-    // eslint-disable-next-line no-console
-    console.log('SafeCommute submitting route plan', payload)
-    onPlanRoute(payload)
+    })
   }
 
   return (

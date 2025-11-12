@@ -23,6 +23,7 @@ SafeCommute reads the following keys from `.env`/`.env.local` (prefix with `VITE
 
 - `VITE_GOOGLE_MAPS_API_KEY` – required for the live map preview.
 - `VITE_BACKEND_BASE_URL` – base URL for the `/routes` and `/feedback` endpoints.
+- `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID` – client credentials for Firebase Authentication + Firestore (used for login and records sync).
 - `VITE_CRIME_DATA_API_URL` and `VITE_CRIME_DATA_API_TOKEN` – optional future integrations for municipal crime feeds.
 - `VITE_WEATHER_API_KEY` – reserved for weather-aware routing.
 - `VITE_PUBLIC_BASE` – optional override for the built asset base path. Set this to `/p24/` (or equivalent) when deploying manually to GitHub Pages from a nested route.
@@ -47,7 +48,10 @@ Set these as environment variables when deploying (Render, Fly, Cloud Run, etc.)
 
 ## Frontend flow
 
-- `src/App.jsx` orchestrates the overall UI state: it seeds demo routes on load, tracks the active route and preference toggle (safest/balanced/fastest), and surfaces status messaging whenever the app falls back to demo data.
+- `src/App.jsx` wires the global providers (Firebase Auth context + React Router) and registers every page in the experience (planner, login, records, about, and contact).
+- `src/layout/AppLayout.jsx` and `src/components/AppNavbar.jsx` render the shared chrome + navigation links so the user can bounce between planner, contact, and records screens.
+- `src/pages/PlannerPage.jsx` hosts the original routing workflow: it seeds demo routes, calls `/routes` when configured, lets the user prioritize metrics, and now exposes a “Save to records” action tied to the authenticated user.
+- `src/pages/LoginPage.jsx` handles email/password auth via Firebase; `src/pages/RecordsPage.jsx` listens to Firestore for per-user route/comment history; `src/pages/AboutPage.jsx` and `src/pages/ContactPage.jsx` round out the brochure content.
 - `src/components/RoutePlannerForm.jsx` collects origin, destination, and travel mode. It swaps fields client side and prevents submission until both fields are filled.
 - `src/components/RouteCard.jsx` renders metrics, confidence levels, and recent incidents for each route. Toggle buttons reorder the same routes by priority.
 - `src/components/FeedbackForm.jsx` captures community notes, submitting to `/feedback` when configured—or quietly storing the result client-side while you remain in demo mode.
@@ -57,6 +61,8 @@ Set these as environment variables when deploying (Render, Fly, Cloud Run, etc.)
 
 - `src/data/mockRoutes.js` holds the three illustrative route options plus feedback categories that seed the UI.
 - `src/services/api.js` exposes `fetchRoutes` and `submitFeedback`, calling your configured backend but gracefully returning the bundled mock data or noop responses when unavailable.
+- `src/services/firebaseClient.js` centralizes Firebase app/Auth/Firestore initialization, while `src/services/records.js` wraps Firestore calls that save and stream per-user route records.
+- `src/components/SaveRecordPanel.jsx` provides the UI hook for persisting the active route + optional note for the logged-in rider.
 
 ## Styling & UX
 

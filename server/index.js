@@ -545,6 +545,10 @@ app.post('/feedback', async (req, res) => {
   }
 })
 
-app.listen(PORT, () => {
-  console.log(`SafeCommute backend running on port ${PORT}`)
-})
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`[server] SafeCommute API listening on port ${PORT}`)
+  })
+}
+
+module.exports = app

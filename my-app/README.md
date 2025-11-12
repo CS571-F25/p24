@@ -1,148 +1,62 @@
 # SafeCommute Web App
 
-SafeCommute helps walkers pick routes that optimise for safety as well as speed. The React frontend renders an interactive map, provides safety metrics for multiple route options, and lets the community contribute lighting/patrol notes.
-
-The UI currently ships with demo data so it works out‑of‑the‑box. Connecting it to your Directions & MongoDB backend simply requires updating environment variables and implementing the expected REST endpoints.
+SafeCommute gives walkers and cyclists a way to compare routes by safety in addition to travel time. The React frontend now includes a routed experience with dedicated login, contact, about, and records pages. When Firebase credentials are provided, riders can authenticate and sync the routes/notes they save from the planner to Firestore.
 
 ## Quick start
 
 ```bash
 npm install
-cp .env.example .env.local
-# add your API keys + backend URL to .env.local
-npm start
+cp .env .env.local   # or create your own .env.local
+# add Google Maps + Firebase creds to .env.local
+npm run dev
 ```
 
-The development server runs at http://localhost:3000.
-
-To ship a production build:
+The Vite dev server defaults to http://localhost:5173. Build for production with:
 
 ```bash
 npm run build
+npm run preview # optional: test the production bundle locally
 ```
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` and fill in:
+Copy `.env` to `.env.local` (git-ignored) and fill in the following:
 
-- `REACT_APP_GOOGLE_MAPS_API_KEY` – required for the in-app map (Maps JS + Directions API).
-- `REACT_APP_BACKEND_BASE_URL` – root of your API server (e.g. `http://localhost:5000/api`).
-- Optional public data keys: `REACT_APP_CRIME_DATA_API_URL`, `REACT_APP_CRIME_DATA_API_TOKEN`, `REACT_APP_WEATHER_API_KEY`.
-- Backend values (`MONGODB_URI`, `MONGODB_DB_NAME`, etc.) are read by the Node server you will deploy alongside this frontend.
+| Key | Purpose |
+| --- | --- |
+| `VITE_GOOGLE_MAPS_API_KEY` | Required for the in-app Google Maps + polyline rendering. |
+| `VITE_BACKEND_BASE_URL` | Root of your `/routes` + `/feedback` API. The UI falls back to demo data when unset. |
+| `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID` | Enable Firebase Authentication + Firestore so users can log in and sync saved route records. |
+| Optional `REACT_APP_*` keys | Legacy hooks for weather/crime integrations; keep them if your backend expects these names. |
 
-Create React App automatically loads `.env.local` (ignored by git).
+Backend-only values such as `MONGODB_URI`, `MONGODB_DB_NAME`, and `JWT_SECRET` are read by the Express server under `server/`. Do not prefix those with `VITE_`.
 
-## API contract
-
-The frontend calls two endpoints on `REACT_APP_BACKEND_BASE_URL`:
-
-1. `GET /routes?start=...&end=...&mode=...&preference=...`
-   ```json
-   [
-     {
-       "id": "route-fastest",
-       "label": "Fastest Route",
-       "type": "fastest",
-       "distanceMi": 1.4,
-       "durationMin": 18,
-       "safetyScore": 3.2,
-       "confidence": "medium",
-       "summary": "Short description",
-       "coordinates": [[37.77, -122.41], ...],
-       "incidents": ["text"],
-       "recommendations": ["text"]
-     }
-   ]
-   ```
-
-2. `POST /feedback`
-   ```json
-   {
-     "location": "Mission & 16th Street",
-     "category": "well-lit",
-     "notes": "Plenty of store fronts lighting",
-     "submittedAt": "2025-01-30T03:18:29.410Z"
-   }
-   ```
-
-Responses should include the created document or `{ ok: true }`. When these endpoints are missing the UI gracefully falls back to bundled mock routes and local feedback handling.
-
-## MongoDB + backend integration
-
-1. **Provision MongoDB**
-   - Atlas: create a free cluster, whitelist your IP, and generate a database user.
-   - Local: install MongoDB Community Edition and run `mongod`.
-
-2. **Set environment variables** (backend):
-   ```
-   MONGODB_URI=mongodb+srv://<user>:<pass>@cluster.mongodb.net
-   MONGODB_DB_NAME=safe_commute
-   MONGODB_ROUTES_COLLECTION=routes
-   MONGODB_FEEDBACK_COLLECTION=feedback
-   JWT_SECRET=super-long-random-string
-   ```
-
-3. **Seed initial data (optional)**:
-   ```bash
-   mongosh "$MONGODB_URI"
-   use safe_commute
-   db.createCollection("routes")
-   db.createCollection("feedback")
-   ```
-
-4. **Build a lightweight API** (Express example):
-   ```js
-   import express from 'express';
-   import { MongoClient } from 'mongodb';
-   import 'dotenv/config';
-
-   const app = express();
-   app.use(express.json());
-
-   const client = new MongoClient(process.env.MONGODB_URI);
-   await client.connect();
-   const db = client.db(process.env.MONGODB_DB_NAME);
-
-   app.get('/api/routes', async (req, res) => {
-     const { start, end, preference } = req.query;
-     // TODO: call Google Directions API, score routes, persist/cache results
-     const routes = await db.collection(process.env.MONGODB_ROUTES_COLLECTION).find({ start, end }).toArray();
-     res.json(routes);
-   });
-
-   app.post('/api/feedback', async (req, res) => {
-     const entry = { ...req.body, createdAt: new Date() };
-     await db.collection(process.env.MONGODB_FEEDBACK_COLLECTION).insertOne(entry);
-     res.json(entry);
-   });
-
-   app.listen(5000, () => console.log('API listening on 5000'));
-   ```
-
-5. **Wire your Directions scorer**
-   - Use Google Directions API to fetch candidate routes.
-   - Overlay your crime datasets + user feedback to compute `safetyScore` and `confidence`.
-   - Persist each route result in MongoDB (include `start`, `end`, `mode`, `preference` to reuse cached data).
-
-6. **Run frontend with backend**
-   - Update `REACT_APP_BACKEND_BASE_URL` to point at your Express server (`http://localhost:5000/api` in the example).
-   - Restart `npm start` so CRA picks up new env values.
-
-## Project structure
+## Key folders
 
 ```
 src/
-  components/        # UI building blocks
-  data/mockRoutes.js # Demo data + categories
-  hooks/useGoogleMaps.js
-  services/api.js    # REST helpers w/ mock fallback
+  App.jsx                  # AuthProvider + React Router setup
+  layout/AppLayout.jsx     # Shared chrome + navbar
+  pages/                   # Planner, Login, Records, About, Contact screens
+  components/              # Reusable UI (RoutePlannerForm, MapView, SaveRecordPanel, etc.)
+  services/api.js          # Routes + feedback API calls (mock fallback)
+  services/firebaseClient.js / records.js  # Firebase + Firestore helpers
 ```
 
-The map auto-loads Google Maps JS using your API key. If the key is missing or the script fails it displays a graceful fallback banner.
+`src/pages/PlannerPage.jsx` hosts the core planner UI. When a user is logged in they can use the “Save to records” panel to push the selected route plus optional note into Firestore; `src/pages/RecordsPage.jsx` streams those documents back in real time.
 
-## Testing
+## API contract
 
-- `npm test` – CRA’s default Jest setup (no custom tests yet).
-- `npm run build` – validates there are no type/compile errors.
+The planner expects a backend with:
 
-Pull requests should add unit tests for new data processing once the backend logic is in place.
+- `POST /routes` – body contains `{ origin, destination, mode, preference }`. Respond with `{ routes: [...] }` matching the shape used in `src/data/mockRoutes.js`.
+- `POST /feedback` – receives free-form community intel. Reply with `{ success: true }` or a richer payload – the UI surfaces `type` + `message` when provided.
+
+When either endpoint is missing the frontend falls back to bundled mock routes or local feedback confirmation so the experience still works for demos.
+
+## Testing & linting
+
+- `npm run build` ensures the bundle compiles (no Jest/Vitest suite is wired up yet).
+- `npm run lint` runs ESLint (React hooks + Refresh plugins).
+
+Add regression coverage once you start replacing mocks with production data pipelines.
