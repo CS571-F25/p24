@@ -78,6 +78,14 @@ function App() {
     try {
       const result = await fetchRoutes(tripRequest)
       setRoutes(result.routes)
+      if (Array.isArray(result.routes) && result.routes.length > 0) {
+        const weatherSnapshot = result.routes.map((route) => ({
+          name: route.name,
+          weather: route.weather ?? null,
+        }))
+        // eslint-disable-next-line no-console
+        console.log('SafeCommute route weather snapshot', weatherSnapshot)
+      }
 
       if (result.routes.length > 0) {
         setSelectedRouteId(result.routes[0].id)

@@ -4,6 +4,10 @@ const express = require('express')
 const { Client } = require('@googlemaps/google-maps-services-js')
 const polyline = require('polyline')
 const crypto = require('crypto')
+const {
+  getWeatherSummary,
+  describeWeatherIncident,
+} = require('./weather')
 dotenv.config()
 
 const { admin, db } = require('./firebase')
@@ -17,6 +21,11 @@ const fallbackFeedbackStore = []
 const FEEDBACK_WINDOW_HOURS = Number(
   process.env.FEEDBACK_WINDOW_HOURS ?? 24 * 30,
 )
+const WEATHER_SAMPLE_MILES = Number(
+  process.env.WEATHER_SAMPLE_MILES ?? 10,
+)
+const WEATHER_MAX_POINTS =
+  Number(process.env.WEATHER_MAX_POINTS ?? 5) || 5
 
 const CATEGORY_WEIGHTS = {
   lighting: 4,
@@ -41,6 +50,69 @@ const secondsToMinutes = (seconds) =>
 
 const clamp = (value, min, max) =>
   Math.min(Math.max(value, min), max)
+
+const METERS_PER_MILE = 1609.34
+const toRadians = (value) => (value * Math.PI) / 180
+
+const haversineMeters = (a, b) => {
+  if (!a || !b) {
+    return 0
+  }
+  const R = 6371000
+  const dLat = toRadians(b.lat - a.lat)
+  const dLng = toRadians(b.lng - a.lng)
+  const lat1 = toRadians(a.lat)
+  const lat2 = toRadians(b.lat)
+  const sinLat = Math.sin(dLat / 2) ** 2
+  const sinLng = Math.sin(dLng / 2) ** 2
+  const c = 2 * Math.atan2(
+    Math.sqrt(sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng),
+    Math.sqrt(1 - (sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng)),
+  )
+  return R * c
+}
+
+const sampleWeatherCheckpoints = (coordinates) => {
+  if (!Array.isArray(coordinates) || coordinates.length === 0) {
+    return []
+  }
+
+  const checkpoints = [
+    { ...coordinates[0], mileMarker: 0 },
+  ]
+
+  const stepMeters = WEATHER_SAMPLE_MILES * METERS_PER_MILE
+  let targetMeters = stepMeters
+  let accumulated = 0
+
+  for (let i = 1; i < coordinates.length; i += 1) {
+    const prev = coordinates[i - 1]
+    const current = coordinates[i]
+    accumulated += haversineMeters(prev, current)
+
+    if (accumulated >= targetMeters) {
+      checkpoints.push({
+        ...current,
+        mileMarker: Math.round((accumulated / METERS_PER_MILE) * 10) / 10,
+      })
+      targetMeters += stepMeters
+    }
+  }
+
+  const last = coordinates[coordinates.length - 1]
+  if (
+    last &&
+    (checkpoints[checkpoints.length - 1]?.lat !== last.lat ||
+      checkpoints[checkpoints.length - 1]?.lng !== last.lng)
+  ) {
+    checkpoints.push({
+      ...last,
+      mileMarker: Math.round((accumulated / METERS_PER_MILE) * 10) / 10,
+    })
+  }
+
+  return checkpoints
+}
 
 const normalizeMode = (mode) => {
   switch ((mode ?? '').toLowerCase()) {
@@ -249,6 +321,71 @@ const applyFeedbackSummary = (route, summary) => {
   }
 }
 
+const attachWeatherInsights = async (routes) =>
+  Promise.all(
+    routes.map(async (route) => {
+      if (!Array.isArray(route.coordinates) || route.coordinates.length === 0) {
+        return route
+      }
+
+      const rawCheckpoints = sampleWeatherCheckpoints(route.coordinates)
+      if (rawCheckpoints.length === 0) {
+        return route
+      }
+
+      let checkpoints = rawCheckpoints
+      if (rawCheckpoints.length > WEATHER_MAX_POINTS) {
+        const preserved = rawCheckpoints.slice(0, WEATHER_MAX_POINTS - 1)
+        const lastPoint = rawCheckpoints[rawCheckpoints.length - 1]
+        const alreadyIncluded = preserved.some(
+          (cp) => cp.lat === lastPoint.lat && cp.lng === lastPoint.lng,
+        )
+        checkpoints = alreadyIncluded ? preserved : [...preserved, lastPoint]
+      }
+
+      if (checkpoints.length === 0) {
+        return route
+      }
+
+      const summaries = await Promise.all(
+        checkpoints.map(async (point) => {
+          const summary = await getWeatherSummary(point.lat, point.lng)
+          return summary
+            ? {
+                mileMarker: point.mileMarker,
+                summary,
+              }
+            : null
+        }),
+      )
+
+      const weatherSegments = summaries.filter(Boolean)
+      if (weatherSegments.length === 0) {
+        return route
+      }
+
+      const primarySummary = weatherSegments[0]?.summary ?? null
+      const description = describeWeatherIncident(primarySummary)
+      const incidents = description
+        ? [
+            {
+              id: `${route.id}-weather`,
+              type: 'Weather',
+              description,
+            },
+            ...route.incidents,
+          ].slice(0, 4)
+        : route.incidents
+
+      return {
+        ...route,
+        weather: primarySummary,
+        weatherSegments,
+        incidents,
+      }
+    }),
+  )
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
 })
@@ -335,7 +472,9 @@ app.post('/routes', async (req, res) => {
       applyFeedbackSummary(route, feedbackSummaries.get(route.id)),
     )
 
-    return res.json({ routes: enrichedRoutes })
+    const weatherEnhancedRoutes = await attachWeatherInsights(enrichedRoutes)
+
+    return res.json({ routes: weatherEnhancedRoutes })
   } catch (error) {
     const message =
       error.response?.data?.error_message ?? error.message ?? 'Unknown error'

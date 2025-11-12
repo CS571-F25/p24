@@ -31,6 +31,20 @@ SafeCommute reads the following keys from `.env`/`.env.local` (prefix with `VITE
 
 All `VITE_*` variables (and any `REACT_APP_*` values you keep around) are exposed to the browser via `import.meta.env`.
 
+### Backend environment (server/.env)
+
+The Node backend (see `server/`) expects its own `.env` file with:
+
+- `PORT` – defaults to `8787` locally; set by your host in production.
+- `GOOGLE_MAPS_API_KEY` – **server-side** Directions API key (can differ from the frontend key/restrictions).
+- `FIREBASE_SERVICE_ACCOUNT_BASE64` *or* `FIREBASE_SERVICE_ACCOUNT_PATH` – credentials for Firestore writes.
+- `FEEDBACK_WINDOW_HOURS` – rolling window (in hours) used when blending community feedback into route scores.
+- `WEATHER_USER_AGENT` – required contact string for weather.gov (e.g., `SafeCommute/1.0 (tanush.shrivastava@gmail.com)`).
+- `WEATHER_CACHE_TTL_MS` – cache duration (ms) for weather/grid lookups to keep the NWS API happy.
+- `WEATHER_SAMPLE_MILES` / `WEATHER_MAX_POINTS` – spacing (in miles) and cap for weather checkpoints calculated along each route.
+
+Set these as environment variables when deploying (Render, Fly, Cloud Run, etc.) so the backend can access Google Maps, Firestore, and weather.gov safely.
+
 ## Frontend flow
 
 - `src/App.jsx` orchestrates the overall UI state: it seeds demo routes on load, tracks the active route and preference toggle (safest/balanced/fastest), and surfaces status messaging whenever the app falls back to demo data.

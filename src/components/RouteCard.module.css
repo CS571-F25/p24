@@ -103,6 +103,51 @@
   text-align: right;
 }
 
+.weatherBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(0, 176, 255, 0.1);
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.weatherValue {
+  font-weight: 600;
+  color: #036;
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.weatherTimeline {
+  background: rgba(3, 102, 214, 0.04);
+  border-radius: 10px;
+  padding: 0.75rem 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.weatherList {
+  list-style: none;
+  padding: 0;
+  margin: 0.4rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.weatherListLabel {
+  display: block;
+  font-size: 0.85rem;
+  color: #0a1f44;
+}
+
+.weatherListValue {
+  font-size: 0.85rem;
+  color: #31506c;
+}
+
 .incidentHeader {
   font-size: 0.95rem;
   font-weight: 600;

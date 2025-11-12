@@ -1,6 +1,25 @@
 import { Badge, Button, Card } from 'react-bootstrap'
 import styles from './RouteCard.module.css'
 
+const formatWeatherSummary = (summary) => {
+  if (!summary) {
+    return null
+  }
+
+  return [
+    summary.shortForecast ?? null,
+    typeof summary.temperature === 'number'
+      ? `${summary.temperature}°${summary.temperatureUnit}`
+      : null,
+    typeof summary.precipitationChance === 'number'
+      ? `${summary.precipitationChance}% precip`
+      : null,
+    summary.windSpeed ?? null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
+
 function RouteCard({ isActive, onSelect, route }) {
   const {
     name,
@@ -12,6 +31,8 @@ function RouteCard({ isActive, onSelect, route }) {
     metrics = {},
     mode,
     communityStats,
+    weather,
+    weatherSegments = [],
   } = route
 
   const durationText =
@@ -20,6 +41,9 @@ function RouteCard({ isActive, onSelect, route }) {
       : '—'
   const distanceText =
     typeof distanceMiles === 'number' ? `${distanceMiles.toFixed(1)} mi` : '—'
+
+  const primaryWeatherSummary =
+    formatWeatherSummary(weatherSegments[0]?.summary ?? weather)
 
   return (
     <Card
@@ -75,6 +99,33 @@ function RouteCard({ isActive, onSelect, route }) {
               {communityStats.positive} positive / {communityStats.negative}{' '}
               caution
             </span>
+          </div>
+        ) : null}
+
+        {primaryWeatherSummary ? (
+          <div className={styles.weatherBar}>
+            <span className={styles.metricLabel}>Weather</span>
+            <span className={styles.weatherValue}>
+              {primaryWeatherSummary}
+            </span>
+          </div>
+        ) : null}
+
+        {weatherSegments.length > 1 ? (
+          <div className={styles.weatherTimeline}>
+            <span className={styles.metricLabel}>Checkpoints</span>
+            <ul className={styles.weatherList}>
+              {weatherSegments.map((segment) => (
+                <li key={`${route.id}-${segment.mileMarker}`}>
+                  <strong className={styles.weatherListLabel}>
+                    Mile {segment.mileMarker}
+                  </strong>
+                  <span className={styles.weatherListValue}>
+                    {formatWeatherSummary(segment.summary)}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         ) : null}
 
