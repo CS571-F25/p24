@@ -7,19 +7,24 @@ import ContactPage from './pages/ContactPage'
 import AboutPage from './pages/AboutPage'
 import LoginPage from './pages/LoginPage'
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      element: <AppLayout />,
+      children: [
+        { index: true, element: <PlannerPage /> },
+        { path: 'records', element: <RecordsPage /> },
+        { path: 'contact', element: <ContactPage /> },
+        { path: 'about', element: <AboutPage /> },
+        { path: 'login', element: <LoginPage /> },
+      ],
+    },
+  ],
   {
-    path: '/',
-    element: <AppLayout />,
-    children: [
-      { index: true, element: <PlannerPage /> },
-      { path: 'records', element: <RecordsPage /> },
-      { path: 'contact', element: <ContactPage /> },
-      { path: 'about', element: <AboutPage /> },
-      { path: 'login', element: <LoginPage /> },
-    ],
+    basename: import.meta.env.BASE_URL ?? '/',
   },
-])
+)
 
 function App() {
   return (
