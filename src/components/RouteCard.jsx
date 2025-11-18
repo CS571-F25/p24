@@ -33,6 +33,7 @@ function RouteCard({ isActive, onSelect, route }) {
     communityStats,
     weather,
     weatherSegments = [],
+    scorecard,
   } = route
 
   const durationText =
@@ -44,6 +45,9 @@ function RouteCard({ isActive, onSelect, route }) {
 
   const primaryWeatherSummary =
     formatWeatherSummary(weatherSegments[0]?.summary ?? weather)
+  const fitScore = scorecard?.composite ?? null
+  const noteSentiment = scorecard?.noteSentiment ?? null
+  const weatherSentiment = scorecard?.weatherSentiment ?? null
 
   return (
     <Card
@@ -88,6 +92,27 @@ function RouteCard({ isActive, onSelect, route }) {
           <div>
             <span className={styles.metricLabel}>Speed</span>
             <span className={styles.metricValue}>{metrics.speed ?? '—'}</span>
+          </div>
+        </div>
+
+        <div className={styles.scoreBar}>
+          <div>
+            <span className={styles.metricLabel}>Route fit</span>
+            <span className={styles.metricValue}>
+              {typeof fitScore === 'number' ? `${fitScore}/100` : '—'}
+            </span>
+          </div>
+          <div className={styles.scoreBadges}>
+            {noteSentiment ? (
+              <span className={styles.scoreBadge}>
+                Notes: {noteSentiment.label}
+              </span>
+            ) : null}
+            {weatherSentiment ? (
+              <span className={styles.scoreBadge}>
+                Weather: {weatherSentiment.label}
+              </span>
+            ) : null}
           </div>
         </div>
 

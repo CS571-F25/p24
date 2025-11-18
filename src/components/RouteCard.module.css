@@ -85,6 +85,36 @@
   font-size: 1.1rem;
 }
 
+.scoreBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  background: rgba(13, 110, 253, 0.08);
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.scoreBadges {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.scoreBadge {
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0d3b88;
+  background: rgba(17, 37, 82, 0.12);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .communityBar {
   display: flex;
   justify-content: space-between;

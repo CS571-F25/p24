@@ -4,6 +4,7 @@ import {
   ButtonGroup,
   Col,
   Container,
+  Form,
   Row,
   ToggleButton,
 } from 'react-bootstrap'
@@ -16,6 +17,10 @@ import { fetchRoutes, submitFeedback } from '../services/api'
 import { saveRouteRecord } from '../services/records'
 import { feedbackCategories, mockRoutes } from '../data/mockRoutes'
 import { useAuth } from '../context/AuthContext'
+import {
+  DEFAULT_SCORING_WEIGHTS,
+  evaluateRoutes,
+} from '../services/routeScoring'
 import '../App.css'
 
 const PREFERENCE_OPTIONS = [
@@ -26,17 +31,23 @@ const PREFERENCE_OPTIONS = [
 
 const preferenceScore = (route, preference) => {
   const metrics = route.metrics ?? {}
+  const composite = route.scorecard?.composite ?? route.safetyScore ?? 0
+  const noteScore = route.scorecard?.noteSentiment?.score ?? 50
+  const weatherScore = route.scorecard?.weatherSentiment?.score ?? 50
+  const base =
+    composite +
+    (noteScore - 50) * 0.25 +
+    (weatherScore - 50) * 0.2
 
   switch (preference) {
     case 'fastest':
-      return metrics.speed ?? -(route.estimatedDuration ?? 0)
+      return base + (metrics.speed ?? 0) * 0.3
     case 'balanced':
       return (
-        metrics.balance ??
-        ((metrics.safety ?? 0) * 0.7 + (metrics.speed ?? 0) * 0.3)
+        base + ((metrics.balance ?? 0) * 0.2 + (metrics.safety ?? 0) * 0.2)
       )
     default:
-      return metrics.safety ?? route.safetyScore ?? 0
+      return base + (metrics.safety ?? 0) * 0.35
   }
 }
 
@@ -45,12 +56,16 @@ const sortRoutesByPreference = (routes, preference) =>
     (a, b) => preferenceScore(b, preference) - preferenceScore(a, preference),
   )
 
+const initialEvaluation = evaluateRoutes(mockRoutes, DEFAULT_SCORING_WEIGHTS)
+
 function PlannerPage() {
   const { user } = useAuth()
-  const [routes, setRoutes] = useState(mockRoutes)
+  const [rawRoutes, setRawRoutes] = useState(mockRoutes)
   const [preference, setPreference] = useState('safest')
   const [selectedRouteId, setSelectedRouteId] = useState(
-    mockRoutes[0]?.id ?? null,
+    initialEvaluation.recommendation?.routeId ??
+      initialEvaluation.scoredRoutes[0]?.id ??
+      null,
   )
   const [statusBanner, setStatusBanner] = useState({
     type: 'info',
@@ -61,6 +76,16 @@ function PlannerPage() {
   const [lastTripRequest, setLastTripRequest] = useState(null)
   const [recordStatus, setRecordStatus] = useState(null)
   const [isSavingRecord, setIsSavingRecord] = useState(false)
+  const [weightConfig, setWeightConfig] = useState({
+    ...DEFAULT_SCORING_WEIGHTS,
+  })
+
+  const evaluation = useMemo(
+    () => evaluateRoutes(rawRoutes ?? [], weightConfig),
+    [rawRoutes, weightConfig],
+  )
+  const routes = evaluation.scoredRoutes ?? []
+  const recommendation = evaluation.recommendation ?? null
 
   const sortedRoutes = useMemo(
     () => sortRoutesByPreference(routes, preference),
@@ -83,16 +108,20 @@ function PlannerPage() {
     setLastTripRequest(tripRequest)
     try {
       const result = await fetchRoutes(tripRequest)
-      setRoutes(result.routes)
-      if (Array.isArray(result.routes) && result.routes.length > 0) {
-        const weatherSnapshot = result.routes.map((route) => ({
+      const fetchedRoutes = Array.isArray(result.routes) ? result.routes : []
+      const nextEvaluation = evaluateRoutes(fetchedRoutes, weightConfig)
+      setRawRoutes(fetchedRoutes)
+      if (fetchedRoutes.length > 0) {
+        const weatherSnapshot = fetchedRoutes.map((route) => ({
           name: route.name,
           weather: route.weather ?? null,
         }))
       }
 
-      if (result.routes.length > 0) {
-        setSelectedRouteId(result.routes[0].id)
+      if (nextEvaluation.recommendation?.routeId) {
+        setSelectedRouteId(nextEvaluation.recommendation.routeId)
+      } else if (nextEvaluation.scoredRoutes.length > 0) {
+        setSelectedRouteId(nextEvaluation.scoredRoutes[0].id)
       }
 
       if (result.usedMock) {
@@ -170,6 +199,14 @@ function PlannerPage() {
     }
   }
 
+  const handleWeightChange = (field) => (event) => {
+    const nextValue = Number(event.target.value)
+    setWeightConfig((prev) => ({
+      ...prev,
+      [field]: nextValue,
+    }))
+  }
+
   return (
     <div className="app-surface">
       <Container className="py-4">
@@ -241,6 +278,75 @@ function PlannerPage() {
               ))}
             </ButtonGroup>
           </div>
+
+          <div className="weight-controls">
+            <div className="weight-controls__header">
+              <h3>Scoring weights</h3>
+              <p>
+                Emphasize community notes or weather risk. Weights auto-balance
+                to produce the overall route fit score.
+              </p>
+            </div>
+            <div className="weight-sliders">
+              <Form.Group>
+                <Form.Label>
+                  Notes & community ({weightConfig.notes})
+                </Form.Label>
+                <Form.Range
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={weightConfig.notes}
+                  onChange={handleWeightChange('notes')}
+                  aria-label="Community notes weight"
+                />
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>
+                  Weather impact ({weightConfig.weather})
+                </Form.Label>
+                <Form.Range
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={weightConfig.weather}
+                  onChange={handleWeightChange('weather')}
+                  aria-label="Weather impact weight"
+                />
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Base metrics ({weightConfig.metrics})</Form.Label>
+                <Form.Range
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={weightConfig.metrics}
+                  onChange={handleWeightChange('metrics')}
+                  aria-label="Base metrics weight"
+                />
+              </Form.Group>
+            </div>
+          </div>
+
+          {recommendation ? (
+            <Alert
+              variant="success"
+              className="status-banner mt-3"
+              data-testid="route-recommendation"
+            >
+              Recommended route:{' '}
+              <strong>{recommendation.routeName}</strong>{' '}
+              {recommendation.score
+                ? `(score ${recommendation.score}/100)`
+                : null}
+              {recommendation.summary ? (
+                <>
+                  {' '}
+                  · {recommendation.summary}
+                </>
+              ) : null}
+            </Alert>
+          ) : null}
 
           <Row className="g-4 mt-1">
             <Col lg={8}>
