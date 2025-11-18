@@ -27,64 +27,20 @@ const withCache = (key, factory) => {
 }
 
 const requestJson = async (url, options = {}) => {
-  const { label = 'weather.gov', headers: extraHeaders } = options
+  const { headers: extraHeaders } = options
   const response = await fetch(url, {
     headers: {
       'User-Agent': WEATHER_USER_AGENT,
-      Accept: 'application/ld+json',
+      Accept: 'application/json',
       ...extraHeaders,
     },
   })
 
   if (!response.ok) {
-    throw new Error(`${label} request failed (${response.status})`)
+    throw new Error(`Weather request failed (${response.status})`)
   }
 
   return response.json()
-}
-
-const roundCoord = (value) => Number.parseFloat(value).toFixed(2)
-
-async function getGridData(lat, lng) {
-  const key = `grid:${roundCoord(lat)},${roundCoord(lng)}`
-  return withCache(key, async () => {
-    const url = `https://api.weather.gov/points/${lat},${lng}`
-    const data = await requestJson(url, { label: 'points' })
-    return {
-      forecastHourly: data?.properties?.forecastHourly ?? null,
-      forecast: data?.properties?.forecast ?? null,
-      office: data?.properties?.cwa ?? null,
-    }
-  })
-}
-
-async function getForecast(url) {
-  if (!url) {
-    return null
-  }
-
-  return withCache(`forecast:${url}`, async () =>
-    requestJson(url, { label: 'forecast' }),
-  )
-}
-
-const buildSummary = (period) => {
-  if (!period) {
-    return null
-  }
-
-  return {
-    shortForecast: period.shortForecast,
-    detailedForecast: period.detailedForecast,
-    temperature: period.temperature,
-    temperatureUnit: period.temperatureUnit,
-    windSpeed: period.windSpeed,
-    windDirection: period.windDirection,
-    startTime: period.startTime,
-    endTime: period.endTime,
-    precipitationChance:
-      period.probabilityOfPrecipitation?.value ?? null,
-  }
 }
 
 const OPEN_METEO_CODES = {
@@ -134,9 +90,7 @@ const getOpenMeteoSummary = async (lat, lng) => {
     const data = await requestJson(
       `https://api.open-meteo.com/v1/forecast?${params.toString()}`,
       {
-        label: 'open-meteo',
         headers: {
-          Accept: 'application/json',
           'User-Agent': WEATHER_USER_AGENT,
         },
       },
@@ -168,43 +122,19 @@ const getOpenMeteoSummary = async (lat, lng) => {
       precipitationChance: current.precipitation_probability ?? null,
     }
   } catch (error) {
-    console.warn('Open-Meteo fallback failed', error.message)
+    console.warn('Open-Meteo request failed', error.message)
     return null
   }
 }
 
 async function getWeatherSummary(lat, lng) {
   try {
-    const grid = await getGridData(lat, lng)
-    let forecastData = await getForecast(grid.forecastHourly)
-
-    if (
-      (!forecastData || !Array.isArray(forecastData?.properties?.periods)) &&
-      grid.forecast
-    ) {
-      forecastData = await getForecast(grid.forecast)
-    }
-
-    const firstPeriod = forecastData?.properties?.periods?.[0]
-    if (firstPeriod) {
-      return buildSummary(firstPeriod)
-    }
-
-    console.warn(
-      'Weather.gov responded with no periods for',
-      lat,
-      lng,
-      '- trying Open-Meteo fallback',
-    )
+    const key = `open-meteo:${lat}:${lng}`
+    return await withCache(key, () => getOpenMeteoSummary(lat, lng))
   } catch (error) {
-    console.warn(
-      'Weather.gov lookup failed',
-      error.message,
-      '- trying Open-Meteo fallback',
-    )
+    console.warn('Open-Meteo summary failed', error.message)
+    return null
   }
-
-  return getOpenMeteoSummary(lat, lng)
 }
 
 const describeWeatherIncident = (summary) => {

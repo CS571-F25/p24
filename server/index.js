@@ -143,27 +143,20 @@ const scoreRoute = (route, index, preference) => {
 
 const formatIncidents = (route, routeId) => {
   if (Array.isArray(route.warnings) && route.warnings.length > 0) {
-    return route.warnings.map((warning, idx) => ({
-      id: `${routeId}-warning-${idx}`,
-      type: 'Advisory',
-      description: warning,
-    }))
+    const filteredWarnings = route.warnings.filter(
+      (warning) =>
+        !/bicycling directions are in beta/i.test(String(warning ?? '')),
+    )
+    if (filteredWarnings.length > 0) {
+      return filteredWarnings.map((warning, idx) => ({
+        id: `${routeId}-warning-${idx}`,
+        type: 'Advisory',
+        description: warning,
+      }))
+    }
   }
 
-  return [
-    {
-      id: `${routeId}-lighting`,
-      type: 'Lighting',
-      description:
-        'Route prioritizes well-lit arterials and community reported safe zones.',
-    },
-    {
-      id: `${routeId}-community`,
-      type: 'Community',
-      description:
-        'Feedback from locals will replace this placeholder once the DB is connected.',
-    },
-  ]
+  return []
 }
 
 const decodePolyline = (encoded) => {

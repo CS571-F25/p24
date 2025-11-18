@@ -63,6 +63,34 @@ const NEGATIVE_NOTE_KEYWORDS = [
   'icy',
   'slippery',
   'windy',
+  'bad',
+  'awful',
+  'terrible',
+  'dangerous',
+  'attack',
+  'attacked',
+  'assault',
+  'robbed',
+  'mugged',
+  'followed',
+  'creepy',
+  'sketchy',
+  'threat',
+  'threatening',
+  'harassed',
+  'scary',
+]
+
+const NEGATIVE_NOTE_PHRASES = [
+  { phrase: 'almost got attacked', delta: -4 },
+  { phrase: 'almost got hit', delta: -3 },
+  { phrase: 'almost got robbed', delta: -4 },
+  { phrase: 'almost got jumped', delta: -4 },
+  { phrase: 'really bad', delta: -2 },
+  { phrase: 'felt unsafe', delta: -2 },
+  { phrase: 'got attacked', delta: -4 },
+  { phrase: 'got robbed', delta: -4 },
+  { phrase: 'got mugged', delta: -4 },
 ]
 
 const WEATHER_NEGATIVE_KEYWORDS = [
@@ -105,6 +133,26 @@ const detectKeywordSentiment = (text, positives, negatives) => {
   return score
 }
 
+const detectPhraseSentiment = (text, entries) => {
+  if (!text) {
+    return 0
+  }
+  const normalized = text.toLowerCase()
+  return entries.reduce((total, entry) => {
+    if (normalized.includes(entry.phrase)) {
+      return total + entry.delta
+    }
+    return total
+  }, 0)
+}
+
+const evaluateNoteSentimentValue = (note) =>
+  detectKeywordSentiment(
+    note,
+    POSITIVE_NOTE_KEYWORDS,
+    NEGATIVE_NOTE_KEYWORDS,
+  ) + detectPhraseSentiment(note, NEGATIVE_NOTE_PHRASES)
+
 const pullRouteNotes = (route) => {
   const highlights = Array.isArray(route?.communityStats?.highlights)
     ? route.communityStats.highlights
@@ -122,7 +170,24 @@ const pullRouteNotes = (route) => {
   return [...highlights, ...communityIncidents].filter(Boolean)
 }
 
-const analyzeNotesSentiment = (route) => {
+const getSentimentOverride = (routeId, overrides) => {
+  if (!routeId || !overrides) {
+    return null
+  }
+  if (overrides instanceof Map) {
+    return overrides.get(routeId) ?? null
+  }
+  if (typeof overrides === 'object') {
+    return overrides[routeId] ?? null
+  }
+  return null
+}
+
+const analyzeNotesSentiment = (route, overrides) => {
+  const override = getSentimentOverride(route?.id, overrides)
+  if (override) {
+    return override
+  }
   const notes = pullRouteNotes(route)
   const stats = route?.communityStats ?? {}
   if (notes.length === 0 && !stats.totalReports) {
@@ -133,16 +198,23 @@ const analyzeNotesSentiment = (route) => {
     }
   }
 
-  const keywordScore = notes.reduce(
-    (total, note) =>
-      total +
-      detectKeywordSentiment(
-        note,
-        POSITIVE_NOTE_KEYWORDS,
-        NEGATIVE_NOTE_KEYWORDS,
-      ),
-    0,
+  const noteBreakdown = notes.reduce(
+    (acc, note) => {
+      const value = evaluateNoteSentimentValue(note)
+      acc.sum += value
+      if (value <= -1) {
+        acc.negative += 1
+      } else if (value >= 1) {
+        acc.positive += 1
+      } else {
+        acc.neutral += 1
+      }
+      acc.total += 1
+      return acc
+    },
+    { sum: 0, positive: 0, negative: 0, neutral: 0, total: 0 },
   )
+  const keywordScore = noteBreakdown.sum
 
   const reportDelta =
     (stats.positive ?? 0) - (stats.negative ?? 0)
@@ -171,11 +243,35 @@ const analyzeNotesSentiment = (route) => {
     reasons.push(`Analyzed ${notes.length} note${notes.length === 1 ? '' : 's'}`)
   }
 
-  return {
+  const result = {
     score,
     label,
     reasons,
   }
+
+  const existingPositive = stats.positive ?? 0
+  const existingNegative = stats.negative ?? 0
+  const mergedPositive = Math.max(existingPositive, noteBreakdown.positive)
+  const mergedNegative = Math.max(existingNegative, noteBreakdown.negative)
+  const derivedTotal =
+    stats.totalReports ??
+    (mergedPositive + mergedNegative > 0
+      ? mergedPositive + mergedNegative
+      : noteBreakdown.total)
+
+  if (
+    mergedPositive !== existingPositive ||
+    mergedNegative !== existingNegative ||
+    (!stats.totalReports && derivedTotal)
+  ) {
+    result.statsOverride = {
+      totalReports: derivedTotal || 0,
+      positive: mergedPositive,
+      negative: mergedNegative,
+    }
+  }
+
+  return result
 }
 
 const evaluateWeatherSummary = (summary) => {
@@ -314,10 +410,42 @@ const normalizeWeights = (weights) => {
   }
 }
 
-const scoreRoute = (route, weightRatios) => {
-  const noteSentiment = analyzeNotesSentiment(route)
+const scoreRoute = (route, weightRatios, options) => {
+  const noteSentiment = analyzeNotesSentiment(
+    route,
+    options?.noteSentimentOverrides,
+  )
   const weatherSentiment = analyzeWeatherSentiment(route)
   const metricScore = computeMetricScore(route)
+
+  const originalMetrics = route.metrics ?? {}
+  const safetyBaseline =
+    typeof originalMetrics.safety === 'number'
+      ? originalMetrics.safety
+      : route.safetyScore ?? 0
+  const balanceBaseline =
+    typeof originalMetrics.balance === 'number'
+      ? originalMetrics.balance
+      : safetyBaseline
+  const speedBaseline =
+    typeof originalMetrics.speed === 'number'
+      ? originalMetrics.speed
+      : safetyBaseline
+
+  const sentimentTilt =
+    noteSentiment.label === 'Caution'
+      ? -12
+      : noteSentiment.label === 'Neutral'
+        ? -4
+        : noteSentiment.label === 'Positive'
+          ? 3
+          : 0
+
+  const adjustedMetrics = {
+    safety: clamp(safetyBaseline + sentimentTilt, 0, 100),
+    balance: clamp(balanceBaseline + sentimentTilt * 0.4, 0, 100),
+    speed: speedBaseline,
+  }
 
   const composite = Math.round(
     noteSentiment.score * weightRatios.notes +
@@ -332,6 +460,7 @@ const scoreRoute = (route, weightRatios) => {
       metricScore,
       noteSentiment,
       weatherSentiment,
+      adjustedMetrics,
     },
   }
 }
@@ -355,10 +484,14 @@ const summarizeRecommendation = (route) => {
   return details.join(' · ')
 }
 
-export const evaluateRoutes = (routes, weights) => {
+export const evaluateRoutes = (routes, weights, options = {}) => {
   const weightRatios = normalizeWeights(weights)
   const scoredRoutes = Array.isArray(routes)
-    ? routes.map((route) => scoreRoute(route, weightRatios))
+    ? routes.map((route) =>
+        scoreRoute(route, weightRatios, {
+          noteSentimentOverrides: options.noteSentimentOverrides,
+        }),
+      )
     : []
   const bestRoute = scoredRoutes.reduce((current, candidate) => {
     if (!candidate?.scorecard) {

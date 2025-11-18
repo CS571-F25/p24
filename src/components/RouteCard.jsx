@@ -36,6 +36,10 @@ function RouteCard({ isActive, onSelect, route }) {
     scorecard,
   } = route
 
+  const displayMetrics = scorecard?.adjustedMetrics ?? metrics
+  const displaySafetyScore =
+    scorecard?.adjustedMetrics?.safety ?? safetyScore
+
   const durationText =
     typeof estimatedDuration === 'number'
       ? `${estimatedDuration} min`
@@ -48,6 +52,28 @@ function RouteCard({ isActive, onSelect, route }) {
   const fitScore = scorecard?.composite ?? null
   const noteSentiment = scorecard?.noteSentiment ?? null
   const weatherSentiment = scorecard?.weatherSentiment ?? null
+  const sentimentStatsOverride =
+    noteSentiment?.statsOverride ?? null
+  const displayCommunityStats = sentimentStatsOverride
+    ? {
+        totalReports: Math.max(
+          sentimentStatsOverride.totalReports ?? 0,
+          (communityStats?.totalReports ?? 0) || 0,
+          (sentimentStatsOverride.positive ?? 0) +
+            (sentimentStatsOverride.negative ?? 0),
+        ),
+        positive: Math.max(
+          sentimentStatsOverride.positive ?? 0,
+          communityStats?.positive ?? 0,
+        ),
+        negative: Math.max(
+          sentimentStatsOverride.negative ?? 0,
+          communityStats?.negative ?? 0,
+        ),
+      }
+    : communityStats
+  const hasCommunityIntel =
+    (displayCommunityStats?.totalReports ?? 0) > 0
 
   return (
     <Card
@@ -64,7 +90,7 @@ function RouteCard({ isActive, onSelect, route }) {
               <span className={styles.metaItem}>{durationText}</span>
               <span className={styles.metaDivider} />
               <span className={styles.metaItem}>
-                Safety score: <strong>{safetyScore}</strong>
+                Safety score: <strong>{displaySafetyScore}</strong>
               </span>
             </div>
           </div>
@@ -81,17 +107,21 @@ function RouteCard({ isActive, onSelect, route }) {
         <div className={styles.metricsRow}>
           <div>
             <span className={styles.metricLabel}>Safety</span>
-            <span className={styles.metricValue}>{metrics.safety ?? '—'}</span>
+            <span className={styles.metricValue}>
+              {displayMetrics.safety ?? '—'}
+            </span>
           </div>
           <div>
             <span className={styles.metricLabel}>Balanced</span>
             <span className={styles.metricValue}>
-              {metrics.balance ?? '—'}
+              {displayMetrics.balance ?? '—'}
             </span>
           </div>
           <div>
             <span className={styles.metricLabel}>Speed</span>
-            <span className={styles.metricValue}>{metrics.speed ?? '—'}</span>
+            <span className={styles.metricValue}>
+              {displayMetrics.speed ?? '—'}
+            </span>
           </div>
         </div>
 
@@ -116,13 +146,13 @@ function RouteCard({ isActive, onSelect, route }) {
           </div>
         </div>
 
-        {communityStats?.totalReports ? (
+        {hasCommunityIntel ? (
           <div className={styles.communityBar}>
             <span className={styles.metricLabel}>Community intel</span>
             <span className={styles.communityValue}>
-              {communityStats.totalReports} reports in the last 30 days ·{' '}
-              {communityStats.positive} positive / {communityStats.negative}{' '}
-              caution
+              {displayCommunityStats.totalReports} reports in the last 30 days ·{' '}
+              {displayCommunityStats.positive} positive /{' '}
+              {displayCommunityStats.negative} caution
             </span>
           </div>
         ) : null}

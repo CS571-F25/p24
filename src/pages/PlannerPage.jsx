@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Alert,
   ButtonGroup,
@@ -21,6 +21,7 @@ import {
   DEFAULT_SCORING_WEIGHTS,
   evaluateRoutes,
 } from '../services/routeScoring'
+import { buildNoteSentimentOverrides } from '../services/sentiment'
 import '../App.css'
 
 const PREFERENCE_OPTIONS = [
@@ -30,7 +31,8 @@ const PREFERENCE_OPTIONS = [
 ]
 
 const preferenceScore = (route, preference) => {
-  const metrics = route.metrics ?? {}
+  const metrics =
+    route.scorecard?.adjustedMetrics ?? route.metrics ?? {}
   const composite = route.scorecard?.composite ?? route.safetyScore ?? 0
   const noteScore = route.scorecard?.noteSentiment?.score ?? 50
   const weatherScore = route.scorecard?.weatherSentiment?.score ?? 50
@@ -67,10 +69,7 @@ function PlannerPage() {
       initialEvaluation.scoredRoutes[0]?.id ??
       null,
   )
-  const [statusBanner, setStatusBanner] = useState({
-    type: 'info',
-    text: 'Demo mode: connect your backend to power live safety data.',
-  })
+  const [statusBanner, setStatusBanner] = useState(null)
   const [isPlanning, setIsPlanning] = useState(false)
   const [feedbackStatus, setFeedbackStatus] = useState(null)
   const [lastTripRequest, setLastTripRequest] = useState(null)
@@ -79,10 +78,21 @@ function PlannerPage() {
   const [weightConfig, setWeightConfig] = useState({
     ...DEFAULT_SCORING_WEIGHTS,
   })
+  const [noteSentimentOverrides, setNoteSentimentOverrides] = useState(
+    new Map(),
+  )
+  const carouselRef = useRef(null)
+  const [carouselNavState, setCarouselNavState] = useState({
+    canScrollPrev: false,
+    canScrollNext: false,
+  })
 
   const evaluation = useMemo(
-    () => evaluateRoutes(rawRoutes ?? [], weightConfig),
-    [rawRoutes, weightConfig],
+    () =>
+      evaluateRoutes(rawRoutes ?? [], weightConfig, {
+        noteSentimentOverrides,
+      }),
+    [rawRoutes, weightConfig, noteSentimentOverrides],
   )
   const routes = evaluation.scoredRoutes ?? []
   const recommendation = evaluation.recommendation ?? null
@@ -91,6 +101,39 @@ function PlannerPage() {
     () => sortRoutesByPreference(routes, preference),
     [routes, preference],
   )
+
+  useEffect(() => {
+    const node = carouselRef.current
+    if (!node) {
+      return undefined
+    }
+    const updateNavState = () => {
+      setCarouselNavState({
+        canScrollPrev: node.scrollLeft > 8,
+        canScrollNext:
+          node.scrollLeft + node.clientWidth < node.scrollWidth - 8,
+      })
+    }
+    updateNavState()
+    node.addEventListener('scroll', updateNavState)
+    window.addEventListener('resize', updateNavState)
+    return () => {
+      node.removeEventListener('scroll', updateNavState)
+      window.removeEventListener('resize', updateNavState)
+    }
+  }, [sortedRoutes])
+
+  useEffect(() => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollTo({ left: 0 })
+      setCarouselNavState({
+        canScrollPrev: false,
+        canScrollNext:
+          carouselRef.current.scrollWidth >
+          carouselRef.current.clientWidth + 8,
+      })
+    }
+  }, [sortedRoutes])
 
   useEffect(() => {
     if (!sortedRoutes.some((route) => route.id === selectedRouteId)) {
@@ -102,6 +145,10 @@ function PlannerPage() {
     () => sortedRoutes.find((route) => route.id === selectedRouteId) ?? null,
     [sortedRoutes, selectedRouteId],
   )
+  const currentRouteIndex = Math.max(
+    0,
+    sortedRoutes.findIndex((route) => route.id === selectedRouteId),
+  )
 
   const handlePlanRoute = async (tripRequest) => {
     setIsPlanning(true)
@@ -109,7 +156,9 @@ function PlannerPage() {
     try {
       const result = await fetchRoutes(tripRequest)
       const fetchedRoutes = Array.isArray(result.routes) ? result.routes : []
-      const nextEvaluation = evaluateRoutes(fetchedRoutes, weightConfig)
+      const nextEvaluation = evaluateRoutes(fetchedRoutes, weightConfig, {
+        noteSentimentOverrides,
+      })
       setRawRoutes(fetchedRoutes)
       if (fetchedRoutes.length > 0) {
         const weatherSnapshot = fetchedRoutes.map((route) => ({
@@ -148,6 +197,20 @@ function PlannerPage() {
       setIsPlanning(false)
     }
   }
+
+  useEffect(() => {
+    let isCancelled = false
+    const updateSentiments = async () => {
+      const overrides = await buildNoteSentimentOverrides(rawRoutes)
+      if (!isCancelled) {
+        setNoteSentimentOverrides(overrides)
+      }
+    }
+    updateSentiments()
+    return () => {
+      isCancelled = true
+    }
+  }, [rawRoutes])
 
   const handleFeedbackSubmit = async (feedbackPayload) => {
     const payloadWithContext = {
@@ -205,6 +268,18 @@ function PlannerPage() {
       ...prev,
       [field]: nextValue,
     }))
+  }
+
+  const handleCarouselNav = (direction) => {
+    const node = carouselRef.current
+    if (!node) {
+      return
+    }
+    const scrollAmount = node.clientWidth * 0.9
+    node.scrollBy({
+      left: direction === 'next' ? scrollAmount : -scrollAmount,
+      behavior: 'smooth',
+    })
   }
 
   return (
@@ -350,15 +425,54 @@ function PlannerPage() {
 
           <Row className="g-4 mt-1">
             <Col lg={8}>
-              <div className="route-list">
-                {sortedRoutes.map((route) => (
-                  <RouteCard
-                    key={route.id}
-                    route={route}
-                    isActive={route.id === selectedRouteId}
-                    onSelect={() => setSelectedRouteId(route.id)}
-                  />
-                ))}
+              <div className="route-carousel">
+                <button
+                  type="button"
+                  className="route-carousel__button"
+                  disabled={!carouselNavState.canScrollPrev}
+                  onClick={() => handleCarouselNav('prev')}
+                  aria-label="View previous routes"
+                >
+                  ‹
+                </button>
+                <div className="route-carousel__track" ref={carouselRef}>
+                  {sortedRoutes.map((route) => (
+                    <div
+                      key={route.id}
+                      className="route-carousel__item"
+                      data-active={route.id === selectedRouteId}
+                    >
+                      <RouteCard
+                        route={route}
+                        isActive={route.id === selectedRouteId}
+                        onSelect={() => setSelectedRouteId(route.id)}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="route-carousel__button"
+                  disabled={!carouselNavState.canScrollNext}
+                  onClick={() => handleCarouselNav('next')}
+                  aria-label="View more routes"
+                >
+                  ›
+                </button>
+              </div>
+              {sortedRoutes.length > 0 ? (
+                <p className="route-carousel__status">
+                  Route {currentRouteIndex + 1} of {sortedRoutes.length}
+                </p>
+              ) : null}
+              <div className="save-panel-wrapper">
+                <SaveRecordPanel
+                  activeRoute={activeRoute}
+                  isSaving={isSavingRecord}
+                  onSave={handleSaveRecord}
+                  status={recordStatus}
+                  user={user}
+                />
               </div>
             </Col>
             <Col lg={4}>
@@ -367,13 +481,6 @@ function PlannerPage() {
                 categories={feedbackCategories}
                 onSubmit={handleFeedbackSubmit}
                 status={feedbackStatus}
-              />
-              <SaveRecordPanel
-                activeRoute={activeRoute}
-                isSaving={isSavingRecord}
-                onSave={handleSaveRecord}
-                status={recordStatus}
-                user={user}
               />
             </Col>
           </Row>
