@@ -46,7 +46,11 @@ function SaveRecordPanel({
           Capture the currently selected route along with any personal note.
         </Card.Text>
 
-        {status ? <Alert variant={status.type}>{status.message}</Alert> : null}
+        {status ? (
+          <Alert variant={status.type} aria-live="polite" role="status">
+            {status.message}
+          </Alert>
+        ) : null}
 
         {activeRoute ? (
           <Form

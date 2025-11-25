@@ -300,7 +300,12 @@ function PlannerPage() {
         </header>
 
         {statusBanner && statusBanner.text ? (
-          <Alert variant={statusBanner.type} className="status-banner">
+          <Alert
+            variant={statusBanner.type}
+            className="status-banner"
+            aria-live="polite"
+            role="status"
+          >
             {statusBanner.text}
           </Alert>
         ) : null}
@@ -408,6 +413,8 @@ function PlannerPage() {
               variant="success"
               className="status-banner mt-3"
               data-testid="route-recommendation"
+              aria-live="polite"
+              role="status"
             >
               Recommended route:{' '}
               <strong>{recommendation.routeName}</strong>{' '}

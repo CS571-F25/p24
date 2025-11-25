@@ -78,9 +78,6 @@ function LoginPage() {
                     <h1 className="h3 mb-1">
                       {mode === 'login' ? 'Log in' : 'Create account'}
                     </h1>
-                    <p className="text-muted mb-0">
-                      Use email + password authentication via Firebase.
-                    </p>
                   </div>
                   <Button
                     variant="link"
@@ -95,7 +92,9 @@ function LoginPage() {
                 </div>
 
                 {status ? (
-                  <Alert variant={status.type}>{status.message}</Alert>
+                  <Alert variant={status.type} aria-live="polite" role="status">
+                    {status.message}
+                  </Alert>
                 ) : null}
 
                 <Form onSubmit={handleSubmit}>

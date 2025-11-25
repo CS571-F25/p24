@@ -1,10 +1,17 @@
 :root {
+  --brand-900: #0a1f3f;
+  --brand-800: #0d2a59;
+  --brand-700: #0d6efd;
+  --brand-100: #e3edff;
+  --muted-700: #334a73;
+  --muted-500: #4f678f;
+  --surface: #f5f8ff;
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont,
     'Helvetica Neue', Arial, sans-serif;
   line-height: 1.6;
   font-weight: 400;
-  color: #102347;
-  background-color: #f5f8ff;
+  color: var(--brand-900);
+  background-color: var(--surface);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -14,7 +21,7 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: #f5f8ff;
+  background-color: var(--surface);
 }
 
 *,
@@ -24,10 +31,32 @@ body {
 }
 
 a {
-  color: #0d6efd;
+  color: var(--brand-700);
   text-decoration: none;
 }
 
 a:hover {
   text-decoration: underline;
+}
+
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+.form-control:focus-visible,
+.btn:focus-visible {
+  outline: 3px solid #ffb700;
+  outline-offset: 2px;
 }

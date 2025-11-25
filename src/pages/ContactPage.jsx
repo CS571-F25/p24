@@ -90,7 +90,12 @@ function ContactPage() {
               <Card.Body>
                 <Card.Title>Send a note</Card.Title>
                 {status ? (
-                  <Alert variant={status.type} className="mb-3">
+                  <Alert
+                    variant={status.type}
+                    className="mb-3"
+                    aria-live="polite"
+                    role="status"
+                  >
                     {status.message}
                   </Alert>
                 ) : null}
@@ -111,7 +116,7 @@ function ContactPage() {
                     <Form.Control
                       type="email"
                       name="email"
-                      placeholder="hello@safewalk.app"
+                      placeholder="tanushsbusiness@gmail.com"
                       value={formData.email}
                       onChange={handleChange}
                       disabled={isSubmitting}

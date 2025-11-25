@@ -70,6 +70,8 @@ function FeedbackForm({ activeRoute, categories, onSubmit, status }) {
           <Alert
             variant={banner.type ?? (banner.success ? 'success' : 'danger')}
             className={styles.alert}
+            aria-live="polite"
+            role="status"
           >
             {banner.message}
           </Alert>

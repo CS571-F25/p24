@@ -2,16 +2,16 @@
   min-height: 100vh;
   background: radial-gradient(
     circle at top right,
-    rgba(84, 163, 255, 0.12),
+    rgba(84, 163, 255, 0.18),
     transparent 55%
   );
 }
 
 .hero {
   border-radius: 28px;
-  background: linear-gradient(140deg, #ffffff 0%, #f1f7ff 45%, #e9f2ff 100%);
+  background: linear-gradient(140deg, #ffffff 0%, #eef4ff 45%, #e1ecff 100%);
   padding: 2.5rem 3rem;
-  box-shadow: 0 28px 80px rgba(13, 110, 253, 0.08);
+  box-shadow: 0 28px 80px rgba(13, 110, 253, 0.12);
   margin-bottom: 2rem;
 }
 
@@ -19,12 +19,12 @@
   font-size: 2.6rem;
   font-weight: 700;
   margin-bottom: 0.6rem;
-  color: #0d1945;
+  color: var(--brand-900);
 }
 
 .hero-lede {
   max-width: 32rem;
-  color: #41577d;
+  color: var(--muted-700);
   font-size: 1.1rem;
   margin-bottom: 0;
 }
@@ -61,12 +61,12 @@
 .weight-controls__header h3 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #0d1945;
+  color: var(--brand-900);
   margin-bottom: 0.3rem;
 }
 
 .weight-controls__header p {
-  color: #435577;
+  color: var(--muted-700);
   margin: 0;
   font-size: 0.9rem;
 }
@@ -80,12 +80,12 @@
 .section-title {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #102347;
+  color: var(--brand-900);
   margin-bottom: 0.35rem;
 }
 
 .section-subtitle {
-  color: #50658b;
+  color: var(--muted-700);
   margin: 0;
 }
 
@@ -134,8 +134,8 @@
 
 .route-carousel__button {
   border: none;
-  background: rgba(13, 110, 253, 0.12);
-  color: #0d1945;
+  background: #dce8ff;
+  color: var(--brand-800);
   width: 42px;
   height: 42px;
   border-radius: 50%;
@@ -156,7 +156,7 @@
 .route-carousel__status {
   margin-top: 0.5rem;
   margin-bottom: 0;
-  color: #50658b;
+  color: var(--muted-700);
   font-weight: 600;
 }
 

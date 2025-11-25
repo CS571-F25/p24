@@ -87,7 +87,7 @@ function MapView({ activeRouteId, onSelectRoute, routes }) {
   if (error) {
     return (
       <Card className={styles.card}>
-        <Card.Body className="d-flex flex-column justify-content-center align-items-start gap-2">
+        <Card.Body className="d-flex flex-column justify-content-center align-items-start gap-2" aria-live="polite" role="status">
           <Card.Title className={styles.title}>
             Map preview unavailable
           </Card.Title>
@@ -104,7 +104,7 @@ function MapView({ activeRouteId, onSelectRoute, routes }) {
   if (!isReady) {
     return (
       <Card className={styles.card}>
-        <Card.Body className="d-flex justify-content-center align-items-center">
+        <Card.Body className="d-flex justify-content-center align-items-center" aria-live="polite" role="status">
           <div className="d-flex align-items-center gap-3">
             <Spinner animation="border" variant="primary" />
             <span className={styles.loadingLabel}>Loading map data…</span>
@@ -116,7 +116,12 @@ function MapView({ activeRouteId, onSelectRoute, routes }) {
 
   return (
     <Card className={styles.card}>
-      <div ref={containerRef} className={styles.mapContainer} />
+      <div
+        ref={containerRef}
+        className={styles.mapContainer}
+        role="region"
+        aria-label="Interactive map showing planned routes"
+      />
     </Card>
   )
 }

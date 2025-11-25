@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Card, Col, Form, Row } from 'react-bootstrap'
+import { Button, ButtonGroup, Card, Col, Form, Row, ToggleButton } from 'react-bootstrap'
 import styles from './RoutePlannerForm.module.css'
 
 const DEFAULT_MODE = 'walk'
@@ -52,6 +52,7 @@ function RoutePlannerForm({ isLoading, onPlanRoute }) {
             className={styles.swapButton}
             onClick={handleSwap}
             disabled={!origin && !destination}
+            aria-label="Swap origin and destination"
           >
             Swap
           </Button>
@@ -60,38 +61,59 @@ function RoutePlannerForm({ isLoading, onPlanRoute }) {
         <Form className="mt-3" onSubmit={handleSubmit}>
           <Row className="g-3">
             <Col xs={12}>
-              <Form.Label className={styles.label}>Starting point</Form.Label>
-              <Form.Control
-                placeholder="e.g. Madison Public Library"
-                value={origin}
-                onChange={(event) => setOrigin(event.target.value)}
-              />
+              <Form.Group controlId="trip-origin">
+                <Form.Label className={styles.label}>Starting point</Form.Label>
+                <Form.Control
+                  placeholder="e.g. Madison Public Library"
+                  value={origin}
+                  onChange={(event) => setOrigin(event.target.value)}
+                  aria-label="Trip origin"
+                />
+              </Form.Group>
             </Col>
             <Col xs={12}>
-              <Form.Label className={styles.label}>Destination</Form.Label>
-              <Form.Control
-                placeholder="e.g. Capitol Square"
-                value={destination}
-                onChange={(event) => setDestination(event.target.value)}
-              />
+              <Form.Group controlId="trip-destination">
+                <Form.Label className={styles.label}>Destination</Form.Label>
+                <Form.Control
+                  placeholder="e.g. Capitol Square"
+                  value={destination}
+                  onChange={(event) => setDestination(event.target.value)}
+                  aria-label="Trip destination"
+                />
+              </Form.Group>
             </Col>
             <Col xs={12}>
-              <Form.Label className={styles.label}>Travel mode</Form.Label>
-              <div className={styles.modeButtons}>
-                {MODE_OPTIONS.map((option) => (
-                  <Button
-                    key={option.value}
-                    variant={
-                      mode === option.value ? 'primary' : 'outline-primary'
-                    }
-                    className={styles.modeButton}
-                    onClick={() => setMode(option.value)}
-                    type="button"
-                  >
-                    {option.label}
-                  </Button>
-                ))}
-              </div>
+              <Form.Group controlId="travel-mode">
+                <Form.Label className={styles.label}>Travel mode</Form.Label>
+                <div
+                  role="radiogroup"
+                  aria-label="Select travel mode"
+                  className={styles.modeButtons}
+                >
+                  <ButtonGroup>
+                    {MODE_OPTIONS.map((option) => (
+                      <ToggleButton
+                        key={option.value}
+                        id={`travel-mode-${option.value}`}
+                        type="radio"
+                        name="travel-mode"
+                        value={option.value}
+                        checked={mode === option.value}
+                        variant={
+                          mode === option.value ? 'primary' : 'outline-primary'
+                        }
+                        className={styles.modeButton}
+                        onChange={(event) =>
+                          setMode(event.currentTarget.value)
+                        }
+                        aria-label={option.label}
+                      >
+                        {option.label}
+                      </ToggleButton>
+                    ))}
+                  </ButtonGroup>
+                </div>
+              </Form.Group>
             </Col>
             <Col xs={12}>
               <Button
